@@ -35,5 +35,5 @@ public class Innings {
     @OneToMany(mappedBy = "innings")
     private List<MiscountedOver> miscountedOvers;
 
-    // Getters and setters
+
 }

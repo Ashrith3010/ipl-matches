@@ -10,11 +10,16 @@ public class Player {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer playerId;
+
     private String playerName;
+
+    private Integer totalRuns; // Ensure this field exists
+
+    private Integer totalWickets; // Add this field
 
     @ManyToOne
     @JoinColumn(name = "team_id")
     private Team team;
 
-    // Getters and setters
+    // Getters and setters (Lombok will generate these)
 }

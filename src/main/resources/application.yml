@@ -2,9 +2,9 @@ spring:
   application:
     name: backend-assignment
   datasource:
-    url: jdbc:mysql://localhost:3306/naga
+    url: jdbc:mysql://localhost:3306/ipl
     username: root
-    password: root
+    password: Naga@2002
     driver-class-name: com.mysql.cj.jdbc.Driver
   jpa:
     hibernate:
@@ -22,3 +22,5 @@ logging:
     root: INFO
     org.springframework.web: DEBUG
     com.indium: DEBUG
+    org.hibernate.SQL: DEBUG
+    org.hibernate.tool.schema: DEBUG
