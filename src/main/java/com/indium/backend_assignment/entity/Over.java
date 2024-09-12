@@ -14,14 +14,12 @@ public class Over {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer overId;
 
+    private Integer overNumber;
+
     @ManyToOne
     @JoinColumn(name = "innings_id")
     private Innings innings;
 
-    private Integer overNumber;
-
     @OneToMany(mappedBy = "over")
     private List<Delivery> deliveries;
-
-    // Getters and setters
 }

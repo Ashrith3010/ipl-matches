@@ -13,13 +13,9 @@ public class Player {
 
     private String playerName;
 
-    private Integer totalRuns; // Ensure this field exists
-
-    private Integer totalWickets; // Add this field
-
     @ManyToOne
     @JoinColumn(name = "team_id")
     private Team team;
 
-    // Getters and setters (Lombok will generate these)
+    private Integer totalRuns; // Add this field
 }

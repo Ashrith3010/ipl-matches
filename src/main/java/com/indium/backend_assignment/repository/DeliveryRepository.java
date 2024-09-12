@@ -8,8 +8,6 @@ import java.util.List;
 
 @Repository
 public interface DeliveryRepository extends JpaRepository<Delivery, Integer> {
-    List<Delivery> findByBatterNameOrBowlerName(String batterName, String bowlerName);
-    List<Delivery> findByBatterName(String batterName);
-    List<Delivery> findByBowlerNameAndWicketIsTrue(String bowlerName);
-    List<Delivery> findByBatterNameAndOver_Innings_Match(String batterName, Match match);
+    List<Delivery> findByBatter(String batter);
+    List<Delivery> findByBatterAndOver_Innings_Match(String batter, Match match);
 }

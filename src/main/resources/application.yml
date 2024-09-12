@@ -2,7 +2,7 @@ spring:
   application:
     name: backend-assignment
   datasource:
-    url: jdbc:mysql://localhost:3306/ipl
+    url: jdbc:mysql://localhost:3306/ipl2
     username: root
     password: Naga@2002
     driver-class-name: com.mysql.cj.jdbc.Driver

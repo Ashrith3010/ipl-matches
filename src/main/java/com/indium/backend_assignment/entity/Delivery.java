@@ -11,21 +11,12 @@ public class Delivery {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer deliveryId;
 
+    private String batter;
+    private String bowler;
+    private Integer runs;
+    private Boolean wicket;
+
     @ManyToOne
     @JoinColumn(name = "over_id")
     private Over over;
-
-    private Integer ballNumber;
-    private String batterName;
-    private String bowlerName;
-    private String nonStrikerName;
-    private Integer runsScored;
-    private Integer extras;
-    private Integer totalRuns;
-    private Boolean wicket;
-    private String wicketKind;
-    private String playerOut;
-    private String fielder;
-
-    // Getters and setters
 }

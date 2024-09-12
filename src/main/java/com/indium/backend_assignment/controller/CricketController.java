@@ -1,6 +1,5 @@
 package com.indium.backend_assignment.controller;
 
-
 import com.indium.backend_assignment.entity.*;
 import com.indium.backend_assignment.service.CricketService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -42,41 +41,14 @@ public class CricketController {
         return ResponseEntity.ok(cricketService.getCumulativeScoreOfPlayer(playerName));
     }
 
-    @GetMapping("/wickets/player/{playerName}")
-    public ResponseEntity<Integer> getWicketsOfPlayer(@PathVariable String playerName) {
-        return ResponseEntity.ok(cricketService.getWicketsOfPlayer(playerName));
-    }
-
     @GetMapping("/matches/date/{date}")
     public ResponseEntity<List<Match>> getMatchScoresByDate(
             @PathVariable @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date) {
         return ResponseEntity.ok(cricketService.getMatchScoresByDate(date));
     }
 
-    @GetMapping("/players/team/{teamName}/match/{matchNumber}")
-    public ResponseEntity<List<Player>> getPlayersByTeamAndMatchNumber(
-            @PathVariable String teamName, @PathVariable int matchNumber) {
-        return ResponseEntity.ok(cricketService.getPlayersByTeamAndMatchNumber(teamName, matchNumber));
-    }
-
-    @GetMapping("/referees/match/{matchNumber}")
-    public ResponseEntity<List<Official>> getMatchRefereesByMatchNumber(@PathVariable int matchNumber) {
-        return ResponseEntity.ok(cricketService.getMatchRefereesByMatchNumber(matchNumber));
-    }
-
     @GetMapping("/batsmen/top")
     public ResponseEntity<Page<Player>> getTopBatsmenPaginated(Pageable pageable) {
         return ResponseEntity.ok(cricketService.getTopBatsmenPaginated(pageable));
-    }
-
-    @GetMapping("/batsmen/{batsmanName}/strike-rate/match/{matchNumber}")
-    public ResponseEntity<Double> getStrikeRateForBatsmanInMatch(
-            @PathVariable String batsmanName, @PathVariable int matchNumber) {
-        return ResponseEntity.ok(cricketService.getStrikeRateForBatsmanInMatch(batsmanName, matchNumber));
-    }
-
-    @GetMapping("/bowlers/top")
-    public ResponseEntity<Page<Player>> getTopWicketTakersPaginated(Pageable pageable) {
-        return ResponseEntity.ok(cricketService.getTopWicketTakersPaginated(pageable));
     }
 }
