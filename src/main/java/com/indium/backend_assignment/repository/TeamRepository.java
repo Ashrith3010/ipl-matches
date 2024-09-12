@@ -9,5 +9,6 @@ import org.springframework.stereotype.Repository;
 @Repository
 public interface TeamRepository extends JpaRepository<Team, Integer> {
     Team findByTeamNameAndMatch(String teamName, Match match);
+    Team findByTeamName(String teamName);
 
 }

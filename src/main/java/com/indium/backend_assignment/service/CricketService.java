@@ -46,10 +46,10 @@ public class CricketService {
 
         // Create and save Match
         Match match = createMatchFromJson((Map<String, Object>) jsonData.get("info"));
-        matchRepository.save(match);
+        match = matchRepository.save(match);
 
-        // Create and save Teams and Players
-        createTeamsAndPlayers(match, (Map<String, Object>) jsonData.get("info"));
+        // Update Teams and Players
+        updateTeamsAndPlayers(match, (Map<String, Object>) jsonData.get("info"));
 
         // Create and save Innings, Overs, and Deliveries
         createInningsOversDeliveries(match, (List<Map<String, Object>>) jsonData.get("innings"));
@@ -63,22 +63,28 @@ public class CricketService {
         return match;
     }
 
-    private void createTeamsAndPlayers(Match match, Map<String, Object> info) {
+    private void updateTeamsAndPlayers(Match match, Map<String, Object> info) {
         Map<String, List<String>> playersMap = (Map<String, List<String>>) info.get("players");
         List<String> teamNames = (List<String>) info.get("teams");
 
         for (String teamName : teamNames) {
-            Team team = new Team();
-            team.setTeamName(teamName);
-            team.setMatch(match);
-            teamRepository.save(team);
+            Team team = teamRepository.findByTeamName(teamName);
+            if (team == null) {
+                team = new Team();
+                team.setTeamName(teamName);
+            }
+            team.setMatch(match);  // Set the match for the team
+            team = teamRepository.save(team);
 
             for (String playerName : playersMap.get(teamName)) {
-                Player player = new Player();
-                player.setPlayerName(playerName);
-                player.setTeam(team);
-                player.setTotalRuns(0); // Initialize total runs to 0
-                playerRepository.save(player);
+                Player player = playerRepository.findByPlayerName(playerName);
+                if (player == null) {
+                    player = new Player();
+                    player.setPlayerName(playerName);
+                    player.setTeam(team);
+                    player.setTotalRuns(0);
+                    playerRepository.save(player);
+                }
             }
         }
     }
@@ -88,6 +94,9 @@ public class CricketService {
         for (Map<String, Object> inningData : inningsData) {
             inningsCount++;
             Team team = teamRepository.findByTeamNameAndMatch((String) inningData.get("team"), match);
+            if (team == null) {
+                throw new RuntimeException("Team not found for this match");
+            }
 
             Innings innings = new Innings();
             innings.setMatch(match);
@@ -116,22 +125,21 @@ public class CricketService {
 
                     // Update player's total runs
                     Player player = playerRepository.findByPlayerName(delivery.getBatter());
+                    if (player == null) {
+                        throw new RuntimeException("Player not found");
+                    }
                     player.setTotalRuns(player.getTotalRuns() + runsScored);
                     playerRepository.save(player);
 
                     // Check for wicket
-                    if (deliveryData.containsKey("wicket")) {
-                        delivery.setWicket(true);
-                    } else {
-                        delivery.setWicket(false);
-                    }
+                    delivery.setWicket(deliveryData.containsKey("wicket"));
 
                     deliveryRepository.save(delivery);
                 }
             }
         }
     }
-
+    // Other methods remain the same
     public List<Match> getMatchesPlayedByPlayer(String playerName) {
         return deliveryRepository.findByBatter(playerName)
                 .stream()
