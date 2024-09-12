@@ -11,11 +11,14 @@ import java.util.List;
 @Data
 public class Match {
     @Id
+    @Column(name="match_id")
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer matchId;
-
+    @Column
     private String city;
+    @Column
     private String venue;
+    @Column(name = "match_date" )
     private LocalDate matchDate;
 
     @OneToMany(mappedBy = "match")

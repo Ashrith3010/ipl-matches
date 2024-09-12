@@ -11,9 +11,10 @@ import java.util.List;
 @Data
 public class Over {
     @Id
+    @Column(name="over_id")
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer overId;
-
+    @Column(name="over_number")
     private Integer overNumber;
 
     @ManyToOne

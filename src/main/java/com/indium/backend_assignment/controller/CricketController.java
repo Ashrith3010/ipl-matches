@@ -32,7 +32,7 @@ public class CricketController {
     }
 
     @GetMapping("/matches/player/{playerName}")
-    public ResponseEntity<List<Match>> getMatchesPlayedByPlayer(@PathVariable String playerName) {
+    public ResponseEntity<String> getMatchesPlayedByPlayer(@PathVariable String playerName) {
         return ResponseEntity.ok(cricketService.getMatchesPlayedByPlayer(playerName));
     }
 
@@ -40,15 +40,15 @@ public class CricketController {
     public ResponseEntity<Integer> getCumulativeScoreOfPlayer(@PathVariable String playerName) {
         return ResponseEntity.ok(cricketService.getCumulativeScoreOfPlayer(playerName));
     }
-
+/*
     @GetMapping("/matches/date/{date}")
-    public ResponseEntity<List<Match>> getMatchScoresByDate(
+    public ResponseEntity<String> getMatchScoresByDate(
             @PathVariable @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date) {
         return ResponseEntity.ok(cricketService.getMatchScoresByDate(date));
     }
-
+*/
     @GetMapping("/batsmen/top")
-    public ResponseEntity<Page<Player>> getTopBatsmenPaginated(Pageable pageable) {
+    public ResponseEntity<String> getTopBatsmenPaginated(Pageable pageable) {
         return ResponseEntity.ok(cricketService.getTopBatsmenPaginated(pageable));
     }
 }

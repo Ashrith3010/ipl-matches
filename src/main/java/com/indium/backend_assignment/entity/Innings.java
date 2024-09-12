@@ -10,6 +10,7 @@ import java.util.List;
 @Data
 public class Innings {
     @Id
+    @Column(name = "innings_id" )
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer inningsId;
 

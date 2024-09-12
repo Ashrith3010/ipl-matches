@@ -140,24 +140,49 @@ public class CricketService {
         }
     }
     // Other methods remain the same
-    public List<Match> getMatchesPlayedByPlayer(String playerName) {
-        return deliveryRepository.findByBatter(playerName)
+    public String getMatchesPlayedByPlayer(String playerName) {
+        long matchCount = deliveryRepository.findByBatter(playerName)
                 .stream()
-                .map(delivery -> delivery.getOver().getInnings().getMatch())
+                .map(delivery -> delivery.getOver().getInnings().getMatch().getMatchId())
                 .distinct()
-                .collect(Collectors.toList());
+                .count();
+        return playerName + " has played in " + matchCount + " match(es).";
     }
 
     public int getCumulativeScoreOfPlayer(String playerName) {
         Player player = playerRepository.findByPlayerName(playerName);
-        return player != null ? player.getTotalRuns() : 0;
+        if (player == null) {
+            return 0;
+        }
+        return player.getTotalRuns();
+    }
+    public String getMatchScoresByDate(LocalDate date) {
+        List<Match> matches = matchRepository.findByMatchDate(date);
+
+        if (matches.isEmpty()) {
+            return "No matches found on " + date;
+        }
+
+        return matches.stream()
+                .map(this::getMatchScore)
+                .collect(Collectors.joining("\n"));
     }
 
-    public List<Match> getMatchScoresByDate(LocalDate date) {
-        return matchRepository.findByMatchDate(date);
+    private String getMatchScore(Match match) {
+        return match.getInnings().stream()
+                .map(innings -> {
+                    int totalRuns = innings.getDeliveries().stream()
+                            .mapToInt(Delivery::getRuns)
+                            .sum();
+                    return innings.getTeam() + ": " + totalRuns;
+                })
+                .collect(Collectors.joining(", "));
     }
 
-    public Page<Player> getTopBatsmenPaginated(Pageable pageable) {
-        return playerRepository.findAllByOrderByTotalRunsDesc(pageable);
+    public String getTopBatsmenPaginated(Pageable pageable) {
+        Page<Player> topBatsmen = playerRepository.findAllByOrderByTotalRunsDesc(pageable);
+        return topBatsmen.getContent().stream()
+                .map(player -> player.getPlayerName() + " (" + player.getTeam().getTeamName() + "): " + player.getTotalRuns() + " runs")
+                .collect(Collectors.joining("\n"));
     }
 }

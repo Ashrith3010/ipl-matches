@@ -8,12 +8,16 @@ import lombok.Data;
 @Data
 public class Delivery {
     @Id
+    @Column(name="delivery_id")
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer deliveryId;
-
+    @Column
     private String batter;
+    @Column
     private String bowler;
+    @Column
     private Integer runs;
+    @Column
     private Boolean wicket;
 
     @ManyToOne

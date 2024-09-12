@@ -8,14 +8,15 @@ import lombok.Data;
 @Data
 public class Player {
     @Id
+    @Column(name="player_id")
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer playerId;
-
+    @Column(name="player_name")
     private String playerName;
 
     @ManyToOne
     @JoinColumn(name = "team_id")
     private Team team;
-
-    private Integer totalRuns; // Add this field
+    @Column
+    private Integer totalRuns;
 }
