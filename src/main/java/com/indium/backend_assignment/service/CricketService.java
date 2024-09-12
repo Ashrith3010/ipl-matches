@@ -156,6 +156,16 @@ public class CricketService {
         }
         return player.getTotalRuns();
     }
+    public String getTopBatsmenPaginated(Pageable pageable) {
+        Page<Player> topBatsmen = playerRepository.findAllByOrderByTotalRunsDesc(pageable);
+        return topBatsmen.getContent().stream()
+                .map(player -> player.getPlayerName() + " (" + player.getTeam().getTeamName() + "): " + player.getTotalRuns() + " runs")
+                .collect(Collectors.joining("\n"));
+    }
+}
+
+
+    /*
     public String getMatchScoresByDate(LocalDate date) {
         List<Match> matches = matchRepository.findByMatchDate(date);
 
@@ -178,11 +188,4 @@ public class CricketService {
                 })
                 .collect(Collectors.joining(", "));
     }
-
-    public String getTopBatsmenPaginated(Pageable pageable) {
-        Page<Player> topBatsmen = playerRepository.findAllByOrderByTotalRunsDesc(pageable);
-        return topBatsmen.getContent().stream()
-                .map(player -> player.getPlayerName() + " (" + player.getTeam().getTeamName() + "): " + player.getTotalRuns() + " runs")
-                .collect(Collectors.joining("\n"));
-    }
-}
+*/

@@ -40,15 +40,17 @@ public class CricketController {
     public ResponseEntity<Integer> getCumulativeScoreOfPlayer(@PathVariable String playerName) {
         return ResponseEntity.ok(cricketService.getCumulativeScoreOfPlayer(playerName));
     }
-/*
-    @GetMapping("/matches/date/{date}")
-    public ResponseEntity<String> getMatchScoresByDate(
-            @PathVariable @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date) {
-        return ResponseEntity.ok(cricketService.getMatchScoresByDate(date));
-    }
-*/
+
     @GetMapping("/batsmen/top")
     public ResponseEntity<String> getTopBatsmenPaginated(Pageable pageable) {
         return ResponseEntity.ok(cricketService.getTopBatsmenPaginated(pageable));
     }
 }
+/*
+ @GetMapping("/matches/date/{date}")
+    public ResponseEntity<String> getMatchScoresByDate(
+            @PathVariable @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date) {
+        return ResponseEntity.ok(cricketService.getMatchScoresByDate(date));
+    }
+
+ */
