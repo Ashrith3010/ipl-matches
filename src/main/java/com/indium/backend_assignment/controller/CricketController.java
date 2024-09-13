@@ -45,12 +45,10 @@ public class CricketController {
     public ResponseEntity<String> getTopBatsmenPaginated(Pageable pageable) {
         return ResponseEntity.ok(cricketService.getTopBatsmenPaginated(pageable));
     }
-}
-/*
- @GetMapping("/matches/date/{date}")
+
+    @GetMapping("/matches/date/{date}")
     public ResponseEntity<String> getMatchScoresByDate(
             @PathVariable @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date) {
         return ResponseEntity.ok(cricketService.getMatchScoresByDate(date));
     }
-
- */
+}

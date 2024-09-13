@@ -9,5 +9,5 @@ import java.util.List;
 @Repository
 public interface DeliveryRepository extends JpaRepository<Delivery, Integer> {
     List<Delivery> findByBatter(String batter);
-    List<Delivery> findByBatterAndOver_Innings_Match(String batter, Match match);
+    List<Delivery> findByOver(Over over);
 }

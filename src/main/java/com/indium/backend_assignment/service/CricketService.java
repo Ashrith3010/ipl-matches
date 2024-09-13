@@ -139,6 +139,7 @@ public class CricketService {
             }
         }
     }
+
     // Other methods remain the same
     public String getMatchesPlayedByPlayer(String playerName) {
         long matchCount = deliveryRepository.findByBatter(playerName)
@@ -156,36 +157,47 @@ public class CricketService {
         }
         return player.getTotalRuns();
     }
+
     public String getTopBatsmenPaginated(Pageable pageable) {
         Page<Player> topBatsmen = playerRepository.findAllByOrderByTotalRunsDesc(pageable);
         return topBatsmen.getContent().stream()
                 .map(player -> player.getPlayerName() + " (" + player.getTeam().getTeamName() + "): " + player.getTotalRuns() + " runs")
                 .collect(Collectors.joining("\n"));
     }
-}
 
 
-    /*
     public String getMatchScoresByDate(LocalDate date) {
         List<Match> matches = matchRepository.findByMatchDate(date);
-
         if (matches.isEmpty()) {
             return "No matches found on " + date;
         }
 
-        return matches.stream()
-                .map(this::getMatchScore)
-                .collect(Collectors.joining("\n"));
+        StringBuilder result = new StringBuilder("Scores for matches on " + date + ":\n");
+
+        for (Match match : matches) {
+            result.append("Match at ").append(match.getVenue()).append(" between teams: ");
+            for (Team team : match.getTeams()) {
+                result.append(team.getTeamName()).append(" ");
+            }
+            result.append("\n");
+
+            List<Innings> inningsList = inningsRepository.findByMatch(match);
+            for (Innings innings : inningsList) {
+                result.append("Team: ").append(innings.getTeam().getTeamName()).append(" scored ");
+
+                int totalRuns = 0;
+                List<Over> overs = overRepository.findByInnings(innings);
+                for (Over over : overs) {
+                    List<Delivery> deliveries = deliveryRepository.findByOver(over);
+                    for (Delivery delivery : deliveries) {
+                        totalRuns += delivery.getRuns();
+                    }
+                }
+                result.append(totalRuns).append(" runs\n");
+            }
+        }
+
+        return result.toString();
     }
 
-    private String getMatchScore(Match match) {
-        return match.getInnings().stream()
-                .map(innings -> {
-                    int totalRuns = innings.getDeliveries().stream()
-                            .mapToInt(Delivery::getRuns)
-                            .sum();
-                    return innings.getTeam() + ": " + totalRuns;
-                })
-                .collect(Collectors.joining(", "));
-    }
-*/
+}
