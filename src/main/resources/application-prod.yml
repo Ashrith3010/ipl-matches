@@ -1,0 +1,23 @@
+spring:
+  datasource:
+    url: jdbc:mysql://localhost:3306/proddb
+    username: produser
+    password: prodpass
+  jpa:
+    hibernate:
+      ddl-auto: none
+    show-sql: false
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.MySQL8Dialect
+
+server:
+  port: 6002
+
+logging:
+  level:
+    root: ERROR
+    org.springframework.web: ERROR
+    com.indium: ERROR
+    org.hibernate.SQL: ERROR
+    org.hibernate.tool.schema: ERROR

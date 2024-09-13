@@ -22,4 +22,11 @@ public class Team {
     @OneToMany(mappedBy = "team")
     private List<Player> players;
 
+    public Team(Integer teamId, String teamName) {
+        this.teamId = teamId;
+        this.teamName = teamName;
+    }
+    public Team() {
+    }
+
 }

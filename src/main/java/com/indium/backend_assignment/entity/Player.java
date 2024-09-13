@@ -13,10 +13,20 @@ public class Player {
     private Integer playerId;
     @Column(name="player_name")
     private String playerName;
-
     @ManyToOne
     @JoinColumn(name = "team_id")
     private Team team;
-    @Column
+    @Column(name = "totalRuns")  // Ensure this matches the column name in your database
     private Integer totalRuns;
+
+    public Player(Integer playerId, String playerName, Integer totalRuns, Team team) {
+        this.playerId = playerId;
+        this.playerName = playerName;
+        this.totalRuns = totalRuns;
+        this.team = team;
+    }
+    public Player() {
+    }
+
+
 }
