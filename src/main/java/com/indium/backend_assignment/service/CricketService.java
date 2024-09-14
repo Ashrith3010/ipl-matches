@@ -3,6 +3,9 @@ package com.indium.backend_assignment.service;
 import com.indium.backend_assignment.entity.*;
 import com.indium.backend_assignment.repository.*;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.apache.kafka.clients.producer.ProducerRecord;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
@@ -11,15 +14,19 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
+import org.springframework.kafka.core.KafkaTemplate;
 
 import java.io.IOException;
 import java.time.LocalDate;
-import java.util.List;
-import java.util.Map;
+import java.time.LocalDateTime;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
 public class CricketService {
+
+    private static final Logger log = LoggerFactory.getLogger(CricketService.class);
+    private static final String TOPIC = "match-logs-topic";
 
     @Autowired
     private MatchRepository matchRepository;
@@ -42,23 +49,42 @@ public class CricketService {
     @Autowired
     private ObjectMapper objectMapper;
 
+    @Autowired
+    private KafkaTemplate<String, String> kafkaTemplate;
 
-
+    @CacheEvict(value = {"matchesByPlayer","cumulativeScore" , "topBatsmen","scoresByDate"}, allEntries = true)
     @Transactional
-    @CacheEvict(value = {"matchesByPlayer", "scoresByDate"}, allEntries = true)
     public String uploadJsonFile(MultipartFile file) throws IOException {
-        Map<String, Object> jsonData = objectMapper.readValue(file.getInputStream(), Map.class);
+        log.info("Received file upload request");
+        if (file.isEmpty()) {
+            log.error("Uploaded file is empty");
+            sendLogToKafka("uploadJsonFile", "fileName", file.getOriginalFilename());
+            return "Uploaded file is empty";
+        }
+
+        Map<String, Object> jsonData;
+        try {
+            jsonData = objectMapper.readValue(file.getInputStream(), Map.class);
+        } catch (IOException e) {
+            log.error("Error parsing JSON file: " + e.getMessage(), e);
+            sendLogToKafka("uploadJsonFile", "fileName", file.getOriginalFilename());
+            throw new IOException("Error parsing JSON file: " + e.getMessage(), e);
+        }
 
         // Extract match info
         Map<String, Object> info = (Map<String, Object>) jsonData.get("info");
         if (info == null) {
+            log.error("Match info is missing in JSON data");
+            sendLogToKafka("uploadJsonFile", "fileName", file.getOriginalFilename());
             return "Match info is missing in JSON data";
         }
 
         // Check if the match already exists
-        Match existingMatch = findExistingMatch(info);
-        if (existingMatch != null) {
-            return "This match data has already been uploaded.";
+        Optional<Match> existingMatchOpt = findExistingMatch(info);
+        if (existingMatchOpt.isPresent()) {
+            log.warn("Match already exists in the database");
+            sendLogToKafka("uploadJsonFile", "fileName", file.getOriginalFilename());
+            return "Already exists";
         }
 
         try {
@@ -72,27 +98,37 @@ public class CricketService {
             // Create and save Innings, Overs, and Deliveries
             List<Map<String, Object>> inningsData = (List<Map<String, Object>>) jsonData.get("innings");
             if (inningsData == null) {
+                log.error("Innings data is missing in JSON data");
+                sendLogToKafka("uploadJsonFile", "fileName", file.getOriginalFilename());
                 return "Innings data is missing in JSON data";
             }
             createInningsOversDeliveries(match, inningsData);
 
+            log.info("File processing completed successfully. Clearing caches...");
+            log.info("Caches cleared after file upload");
+            sendLogToKafka("uploadJsonFile", "fileName", file.getOriginalFilename());
+
             return "File uploaded successfully";
         } catch (Exception e) {
+            log.error("Error occurred while processing the file: " + e.getMessage(), e);
+            sendLogToKafka("uploadJsonFile", "fileName", file.getOriginalFilename());
             return "Error occurred while processing the file: " + e.getMessage();
         }
     }
 
-    private Match findExistingMatch(Map<String, Object> info) {
+
+    private Optional<Match> findExistingMatch(Map<String, Object> info) {
         String city = (String) info.get("city");
         String venue = (String) info.get("venue");
         List<?> dates = (List<?>) info.get("dates");
         if (dates == null || dates.isEmpty()) {
-            return null; // Handle this case in the calling method
+            return Optional.empty();
         }
         LocalDate matchDate = LocalDate.parse((String) dates.get(0));
 
-        return matchRepository.findByCityAndVenueAndMatchDate(city, venue, matchDate);
+        return Optional.ofNullable(matchRepository.findByCityAndVenueAndMatchDate(city, venue, matchDate));
     }
+
     private Match createMatchFromJson(Map<String, Object> info) {
         Match match = new Match();
         match.setCity((String) info.get("city"));
@@ -111,18 +147,18 @@ public class CricketService {
         if (playersMap == null) {
             throw new RuntimeException("Players data is missing in JSON data");
         }
+
         List<String> teamNames = (List<String>) info.get("teams");
         if (teamNames == null) {
             throw new RuntimeException("Teams data is missing in JSON data");
         }
 
         for (String teamName : teamNames) {
-            Team team = teamRepository.findByTeamName(teamName);
-            if (team == null) {
-                team = new Team();
-                team.setTeamName(teamName);
-            }
-            team.setMatch(match);  // Set the match for the team
+            // Create a new team for this specific match
+            Team team = new Team();
+            team.setTeamName(teamName);
+            team.setMatches(new ArrayList<>());
+            team.getMatches().add(match);
             team = teamRepository.save(team);
 
             List<String> playerNames = playersMap.get(teamName);
@@ -132,14 +168,15 @@ public class CricketService {
                     if (player == null) {
                         player = new Player();
                         player.setPlayerName(playerName);
-                        player.setTeam(team);
                         player.setTotalRuns(0);
-                        playerRepository.save(player);
                     }
+                    player.setTeam(team);
+                    playerRepository.save(player);
                 }
             }
         }
     }
+
 
     private void createInningsOversDeliveries(Match match, List<Map<String, Object>> inningsData) {
         int inningsCount = 0;
@@ -204,36 +241,53 @@ public class CricketService {
         }
     }
 
-    // Other methods remain the same
     @Cacheable(value = "matchesByPlayer", key = "#playerName")
     public String getMatchesPlayedByPlayer(String playerName) {
+        log.info("Fetching matches played by player: {}", playerName);
         long matchCount = deliveryRepository.findByBatter(playerName)
                 .stream()
                 .filter(delivery -> delivery.getOver() != null && delivery.getOver().getInnings() != null)
                 .map(delivery -> delivery.getOver().getInnings().getMatch().getMatchId())
                 .distinct()
                 .count();
+        log.info("Matches played by player {}: {}", playerName, matchCount);
+        sendLogToKafka("getMatchesPlayedByPlayer", "playerName", playerName);
         return playerName + " has played in " + matchCount + " match(es).";
     }
+
     @Cacheable(value = "cumulativeScore", key = "#playerName")
     public int getCumulativeScoreOfPlayer(String playerName) {
+        log.info("Fetching cumulative score for player: {}", playerName);
         Player player = playerRepository.findByPlayerName(playerName);
         if (player == null) {
+            sendLogToKafka("getCumulativeScoreOfPlayer", "playerName", playerName);
             return 0;
         }
+        log.info("Cumulative score for player {}: {}", playerName, player.getTotalRuns());
+        sendLogToKafka("getCumulativeScoreOfPlayer", "playerName", playerName);
         return player.getTotalRuns();
     }
+
     @Cacheable(value = "topBatsmen", key = "{#pageable.pageNumber, #pageable.pageSize}")
-    public String getTopBatsmenPaginated(Pageable pageable) {
+    public String getTopBatsmenPaginated(Pageable pageable) {log.info("Fetching top batsmen with pagination");
+        log.info("Fetching top batsmen with pagination");
         Page<Player> topBatsmen = playerRepository.findAllByOrderByTotalRunsDesc(pageable);
-        return topBatsmen.getContent().stream()
+        String result = topBatsmen.getContent().stream()
+                .limit(5)
                 .map(player -> player.getPlayerName() + " (" + player.getTeam().getTeamName() + "): " + player.getTotalRuns() + " runs")
                 .collect(Collectors.joining("\n"));
+        log.info("Top 5 batsmen are: {} ", result);
+        sendLogToKafka("getTopBatsmenPaginated", "pageNumber", String.valueOf(pageable.getPageNumber()));
+        return result;
+
     }
+
     @Cacheable(value = "scoresByDate", key = "#date")
     public String getMatchScoresByDate(LocalDate date) {
+        log.info("Fetching match scores for date: {}", date);
         List<Match> matches = matchRepository.findByMatchDate(date);
         if (matches.isEmpty()) {
+            sendLogToKafka("getMatchScoresByDate", "date", date.toString());
             return "No matches found on " + date;
         }
 
@@ -261,7 +315,26 @@ public class CricketService {
                 result.append(totalRuns).append(" runs\n");
             }
         }
-
+        log.info("match scores for date: {} are: {} ", date, result);
+        sendLogToKafka("getMatchScoresByDate", "date", date.toString());
         return result.toString();
     }
+    private void sendLogToKafka(String methodName, String paramKey, String paramValue) {
+        try {
+            Map<String, Object> logMessage = new HashMap<>();
+            logMessage.put("method", methodName);
+            logMessage.put("timestamp", LocalDateTime.now().toString());
+            logMessage.put("params", Map.of(paramKey, paramValue));
+
+            String jsonLog = objectMapper.writeValueAsString(logMessage);
+
+            // Send log to Kafka
+            kafkaTemplate.send(new ProducerRecord<>(TOPIC, jsonLog));
+            log.info("Log sent to Kafka: {}", jsonLog);
+
+        } catch (Exception e) {
+            log.error("Failed to send log to Kafka", e);
+        }
+    }
+
 }

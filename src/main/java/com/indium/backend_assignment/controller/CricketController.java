@@ -6,6 +6,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.format.annotation.DateTimeFormat;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
@@ -24,8 +25,16 @@ public class CricketController {
     @PostMapping("/upload")
     public ResponseEntity<String> uploadJsonFile(@RequestParam("file") MultipartFile file) {
         try {
-            cricketService.uploadJsonFile(file);
-            return ResponseEntity.ok("File uploaded successfully");
+            String result = cricketService.uploadJsonFile(file);
+
+            // Check the result and respond with appropriate status code
+            if ("Already exists".equals(result)) {
+                return ResponseEntity.status(HttpStatus.CONFLICT).body(result);
+            } else if (result.startsWith("Error")) {
+                return ResponseEntity.badRequest().body(result);
+            } else {
+                return ResponseEntity.ok(result);
+            }
         } catch (IOException e) {
             return ResponseEntity.badRequest().body("Error uploading file: " + e.getMessage());
         }
