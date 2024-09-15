@@ -52,7 +52,7 @@ public class CricketService {
     @Autowired
     private KafkaTemplate<String, String> kafkaTemplate;
 
-    @CacheEvict(value = {"matchesByPlayer","cumulativeScore" , "topBatsmen","scoresByDate"}, allEntries = true)
+    @CacheEvict(value = {"matchesByPlayer", "cumulativeScore", "topBatsmen", "scoresByDate"}, allEntries = true)
     @Transactional
     public String uploadJsonFile(MultipartFile file) throws IOException {
         log.info("Received file upload request");
@@ -107,7 +107,6 @@ public class CricketService {
             log.info("File processing completed successfully. Clearing caches...");
             log.info("Caches cleared after file upload");
             sendLogToKafka("uploadJsonFile", "fileName", file.getOriginalFilename());
-
             return "File uploaded successfully";
         } catch (Exception e) {
             log.error("Error occurred while processing the file: " + e.getMessage(), e);
@@ -337,4 +336,5 @@ public class CricketService {
         }
     }
 
-}
+
+    }
