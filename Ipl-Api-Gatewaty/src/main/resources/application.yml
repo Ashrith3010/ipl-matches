@@ -1,0 +1,5 @@
+spring:
+  application:
+    name: Ipl-Api-Gateway
+server:
+  port: 5001
