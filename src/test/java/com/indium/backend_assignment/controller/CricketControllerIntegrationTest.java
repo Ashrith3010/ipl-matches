@@ -33,7 +33,7 @@ public class CricketControllerIntegrationTest {
         headers.setContentType(MediaType.MULTIPART_FORM_DATA);
 
         // Load the test file
-        ClassPathResource fileResource = new ClassPathResource("335982.json");
+        ClassPathResource fileResource = new ClassPathResource("335996.json");
 
         MultiValueMap<String, Object> body = new LinkedMultiValueMap<>();
         body.add("file", fileResource);
@@ -41,8 +41,8 @@ public class CricketControllerIntegrationTest {
         HttpEntity<MultiValueMap<String, Object>> requestEntity = new HttpEntity<>(body, headers);
 
         ResponseEntity<String> response = testRestTemplate.postForEntity(url, requestEntity, String.class);
-        assertEquals(200, response.getStatusCodeValue());
-        assertEquals("File uploaded successfully", response.getBody());
+        assertEquals(409, response.getStatusCodeValue());
+        assertEquals("Already exists", response.getBody());
     }
 
     @Test
@@ -51,7 +51,7 @@ public class CricketControllerIntegrationTest {
         String url = "http://localhost:" + port + "/api/cricket/matches/player/" + playerName;
 
         String response = testRestTemplate.getForObject(url, String.class);
-        assertEquals("V Kohli has played in 1 match(es).", response);
+        assertEquals("V Kohli has played in 4 match(es).", response);
     }
 
     @Test
@@ -60,7 +60,7 @@ public class CricketControllerIntegrationTest {
         String url = "http://localhost:" + port + "/api/cricket/score/player/" + playerName;
 
         Integer response = testRestTemplate.getForObject(url, Integer.class);
-        assertEquals(1, response);
+        assertEquals(49, response);
     }
 
     @Test

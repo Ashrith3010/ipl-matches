@@ -10,6 +10,7 @@ import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -171,6 +172,7 @@ class CricketServiceTest {
 
     @Test
     void testGetTopBatsmenPaginated() {
+        // Create mock player data
         Player player1 = new Player();
         player1.setPlayerName("John");
         player1.setTotalRuns(150);
@@ -188,12 +190,23 @@ class CricketServiceTest {
         List<Player> players = Arrays.asList(player1, player2);
         Page<Player> page = new PageImpl<>(players);
 
+        // Mock the repository call for pagination
         when(playerRepository.findAllByOrderByTotalRunsDesc(any(Pageable.class))).thenReturn(page);
 
-        String result = cricketService.getTopBatsmenPaginated(Pageable.unpaged());
+        // Use a specific pageable object instead of unpaged to avoid UnsupportedOperationException
+        Pageable pageable = PageRequest.of(0, 5);  // page 0 with page size 5
+
+        // Call the service method
+        String result = cricketService.getTopBatsmenPaginated(pageable);
+
+        // Assert the expected results
         assertTrue(result.contains("John"));
         assertTrue(result.contains("Mark"));
+
+        // Optionally, verify the repository was called with the expected pageable object
+        verify(playerRepository, times(1)).findAllByOrderByTotalRunsDesc(pageable);
     }
+
     @Test
     void testGetMatchScoresByDate() {
         Match match = new Match();
