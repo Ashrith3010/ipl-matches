@@ -1,0 +1,61 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: backend-assignment
+  labels:
+    app: backend-assignment
+spec:
+  replicas: 2  # Adjusted from 2 to 1
+  selector:
+    matchLabels:
+      app: backend-assignment
+  template:
+    metadata:
+      labels:
+        app: backend-assignment
+    spec:
+      containers:
+        - name: backend-assignment
+          image: backend-assignment:1.0  # Updated image version
+          ports:
+            - containerPort: 9999  # Original port
+          env:
+            - name: KAFKA_HOST
+              value: "host.docker.internal:9094"  # Updated Kafka host
+            - name: REDIS_HOST
+              value: "host.docker.internal"  # No change here
+            - name: MYSQL_URL
+              value: "jdbc:mysql://host.docker.internal:1000/ipl2"  # Updated MySQL URL
+          resources:
+            requests:
+              memory: "512Mi"  # Increased from 128Mi
+              cpu: "500m"      # Increased from 250m
+            limits:
+              memory: "1Gi"   # Increased from 256Mi
+              cpu: "1"        # Increased from 500m
+---
+apiVersion: autoscaling/v1
+kind: HorizontalPodAutoscaler
+metadata:
+  name: backend-assignment-hpa
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: backend-assignment
+  minReplicas: 1
+  maxReplicas: 10
+  targetCPUUtilizationPercentage: 50
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: backend-assignment-service
+spec:
+  selector:
+    app: backend-assignment
+  type: NodePort
+  ports:
+    - port: 80
+      targetPort: 9999  # Original port
+      nodePort: 30005
