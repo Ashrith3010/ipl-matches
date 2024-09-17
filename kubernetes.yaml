@@ -1,3 +1,4 @@
+
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -25,7 +26,7 @@ spec:
             - name: REDIS_HOST
               value: "host.docker.internal"  # No change here
             - name: MYSQL_URL
-              value: "jdbc:mysql://host.docker.internal:1000/ipl2"  # Updated MySQL URL
+              value: "jdbc:mysql://host.docker.internal:3300/ipl2"  # Updated MySQL URL
           resources:
             requests:
               memory: "512Mi"  # Increased from 128Mi
